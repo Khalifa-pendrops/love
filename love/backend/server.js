@@ -100,7 +100,7 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/send", auth, async (req, res) => {
-  const { message } = req.body;
+  const { content: message } = req.body;
   const encrypted = encryptMessage(message, key);
 
   const newMessage = await Message.create({

@@ -18,11 +18,15 @@ const Navigation = () => {
         <Navbar.Brand as={Link} to="/" className="fw-bold text-primary">
           💖 Love Stories
         </Navbar.Brand>
-        <Navbar.Toggle />
-        <Navbar.Collapse>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
             {user ? (
               <>
+                <Nav.Link as={Link} to="/story-timeline">
+                  Story Timeline
+                </Nav.Link>
+
                 <Nav.Link as={Link} to="/send">
                   Send
                 </Nav.Link>
@@ -32,6 +36,7 @@ const Navigation = () => {
                 <Button
                   variant="outline-danger"
                   size="sm"
+                  className="ms-2"
                   onClick={handleLogout}
                 >
                   Logout

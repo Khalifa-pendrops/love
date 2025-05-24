@@ -1,12 +1,14 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://some-love-story.onrender.com",
+  baseURL: "https://love-vz9d.onrender.com",
 });
 
 API.interceptors.request.use((config) => {
   console.log("Making request to:", config.url);
   const token = localStorage.getItem("token");
+        // const decoded = jwt_decode(token);
+        // const user = { email: decoded.email || email };
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });

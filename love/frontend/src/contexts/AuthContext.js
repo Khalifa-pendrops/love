@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
       if (!token) return;
       setLoading(true);
       try {
-        const { data } = await API.get("/me"); // assuming you have this endpoint to get current user
+        const { data } = await API.get("/me");
         setUser(data.user);
         setPartner(data.user.partner || null);
         await fetchMessages(data.user.partner);

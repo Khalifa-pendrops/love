@@ -1,95 +1,184 @@
 import React, { useEffect, useState } from "react";
-import { Container, Card, Button, Spinner, Alert } from "react-bootstrap";
-import API from "../Api";
+import { useNavigate } from "react-router-dom";
+import api from "../Api";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Form,
+  Alert,
+} from "react-bootstrap";
 
 const Inbox = () => {
   const [messages, setMessages] = useState([]);
-  const [decryptedMessages, setDecryptedMessages] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [content, setContent] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const res = await API.get("/inbox");
-        setMessages(res.data);
-      } catch (err) {
-        setError(err.response?.data || "Failed to load messages.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const navigate = useNavigate();
 
-    fetchMessages();
-  }, []);
+  const token = localStorage.getItem("token");
 
-  const handleDecrypt = async (messageId, payload) => {
+  // const fetchMessages = async () => {
+  //   try {
+  //     const res = await api.get("/inbox", {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  //     setMessages(res.data);
+  //   } catch (err) {
+  //     setError("Failed to fetch messages.");
+  //   }
+  // };
+
+  const fetchMessages = async () => {
     try {
-      const res = await API.post("/decrypt", {
-        iv: payload.iv,
-        authTag: payload.authTag,
-        cipherText: payload.cipherText,
+      const res = await api.get("/inbox", {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      setDecryptedMessages((prev) => ({
-        ...prev,
-        [messageId]: res.data.message,
-      }));
+      // Decrypt each message using the backend /decrypt endpoint
+      const decryptedMessages = await Promise.all(
+        res.data.map(async (msg) => {
+          try {
+            const decrypted = await api.post(
+              "/decrypt",
+              {
+                iv: msg.iv,
+                authTag: msg.authTag,
+                cipherText: msg.cipherText,
+              },
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            return {
+              ...msg,
+              content: decrypted.data.message,
+            };
+          } catch (decryptionErr) {
+            return {
+              ...msg,
+              content: "[Decryption failed]",
+            };
+          }
+        })
+      );
+
+      setMessages(decryptedMessages);
     } catch (err) {
-      alert("Decryption failed.");
+      setError("Failed to fetch messages.");
     }
   };
 
-  if (loading) {
-    return (
-      <Container className="mt-5 text-center">
-        <Spinner animation="border" variant="primary" />
-      </Container>
-    );
+
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    try {
+      await api.post(
+        "/send",
+        { content },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setContent("");
+      setSuccess("Message sent successfully!");
+      fetchMessages(); 
+    } catch (err) {
+      setError(err.response?.data || "Failed to send message.");
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
+  //remove this line later - maybe 😉
+useEffect(() => {
+  if (messages.length >= 3) {
+    navigate("/timeline");
   }
+}, [messages, navigate]);
+
 
   return (
-    <Container className="mt-5">
-      <h3 className="text-primary mb-4">📥 Your Inbox</h3>
+    <Container className="py-5">
+      <Row className="justify-content-center">
+        <Col md={8}>
+          <h2 className="mb-4 text-center text-danger">
+            Your Romantic Inbox 💌
+          </h2>
 
-      {error && <Alert variant="danger">{error}</Alert>}
-
-      {messages.length === 0 ? (
-        <Alert variant="info">You have no messages.</Alert>
-      ) : (
-        messages.map((msg) => (
-          <Card key={msg._id} className="mb-3 shadow-sm">
+          {/* Send Message Form */}
+          <Card
+            className="mb-4 shadow-sm"
+            style={{ backgroundColor: "#fff0f5" }}
+          >
             <Card.Body>
-              <Card.Subtitle className="mb-2 text-muted">
-                From: {msg.from}
-              </Card.Subtitle>
-
-              {decryptedMessages[msg._id] ? (
-                <Card.Text className="text-dark">
-                  {decryptedMessages[msg._id]}
-                </Card.Text>
-              ) : (
+              <Form onSubmit={sendMessage}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Write a love note</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Express your feelings..."
+                    required
+                    style={{ borderRadius: "10px" }}
+                  />
+                </Form.Group>
                 <Button
-                  variant="outline-primary"
-                  onClick={() =>
-                    handleDecrypt(msg._id, {
-                      iv: msg.iv,
-                      authTag: msg.authTag,
-                      cipherText: msg.cipherText,
-                    })
-                  }
+                  variant="danger"
+                  type="submit"
+                  style={{ borderRadius: "10px" }}
                 >
-                  Decrypt Message
+                  Send Message
                 </Button>
+              </Form>
+              {error && (
+                <Alert className="mt-3" variant="danger">
+                  {error}
+                </Alert>
               )}
-
-              <div className="mt-2 small text-muted">
-                Sent: {new Date(msg.createdAt).toLocaleString()}
-              </div>
+              {success && (
+                <Alert className="mt-3" variant="success">
+                  {success}
+                </Alert>
+              )}
             </Card.Body>
           </Card>
-        ))
-      )}
+
+          {/* Messages Display */}
+          {messages.length === 0 ? (
+            <p className="text-muted text-center">No messages yet.</p>
+          ) : (
+            messages.map((msg, idx) => (
+              <Card
+                key={idx}
+                className="mb-3 shadow-sm"
+                style={{
+                  backgroundColor: "#fff0f5",
+                  borderLeft: "5px solid #C2185B",
+                }}
+              >
+                <Card.Body>
+                  <p>{msg.content}</p>
+                  <small className="text-muted">From: {msg.from}</small>
+                </Card.Body>
+              </Card>
+            ))
+          )}
+        </Col>
+      </Row>
     </Container>
   );
 };

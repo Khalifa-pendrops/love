@@ -1,36 +1,54 @@
-import React from "react";
+// src/components/StoryTimeline.js
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { Container, ListGroup } from "react-bootstrap";
+import { Container, Row, Col, Card, Spinner } from "react-bootstrap";
 
 const StoryTimeline = () => {
-  const { messages, user, partner } = useAuth();
+  const { user, inbox, decryptMessage } = useAuth();
+  const [decryptedMessages, setDecryptedMessages] = useState([]);
 
-  // Filter messages between user and partner here
-  const storyMessages = messages.filter(
-    (msg) =>
-      (msg.sender === user && msg.receiver === partner) ||
-      (msg.sender === partner && msg.receiver === user)
-  );
+  useEffect(() => {
+    const decryptAll = async () => {
+      const results = await Promise.all(
+        inbox.map((msg) => decryptMessage(msg))
+      );
+      setDecryptedMessages(results);
+    };
+    if (inbox.length > 0) decryptAll();
+  }, [inbox]);
 
   return (
-    <Container className="mt-5" style={{ color: "#fff" }}>
-      <h2>Your Love Story Timeline</h2>
-      {storyMessages.length === 0 ? (
-        <p>No messages yet between you and {partner || "your partner"}.</p>
+    <Container className="py-5 story-timeline-bg">
+      <h2 className="text-center text-danger mb-4 ">
+        💌 Our Love Story Timeline
+      </h2>
+      {decryptedMessages.length === 0 ? (
+        <div className="d-flex justify-content-center py-5 ">
+          <Spinner animation="border" variant="danger" />
+        </div>
       ) : (
-        <ListGroup>
-          {storyMessages.map((msg) => (
-            <ListGroup.Item
-              key={msg._id || msg.id}
-              variant={msg.sender === user ? "danger" : "light"}
-            >
-              <strong>{msg.sender === user ? "You" : partner}:</strong>{" "}
-              {msg.decrypted ? msg.content : "Encrypted message"}
-              <br />
-              <small>{new Date(msg.timestamp).toLocaleString()}</small>
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
+        <Row className="justify-content-center">
+          <Col md={8}>
+            {decryptedMessages.map((msg, index) => (
+              <Card
+                key={index}
+                className="mb-4 border-start border-5 border-danger shadow-sm fade-in"
+                style={{ animationDelay: `${index * 0.2}s` }}
+              >
+                <Card.Body>
+                  <Card.Title className="text-muted small ">
+                    Message {inbox.length - index} from{" "}
+                    <strong>{inbox[index].from}</strong>
+                  </Card.Title>
+                  <Card.Text style={{ fontStyle: "italic" }}>{msg}</Card.Text>
+                  <div className="text-end text-muted small ">
+                    {new Date(inbox[index].createdAt).toLocaleString()}
+                  </div>
+                </Card.Body>
+              </Card>
+            ))}
+          </Col>
+        </Row>
       )}
     </Container>
   );

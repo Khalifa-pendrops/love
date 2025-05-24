@@ -13,7 +13,7 @@ import Send from "./components/MessageSender";
 import PartnershipSwitch from "./components/PartnershipSwitch";
 import StoryTimeline from "./components/StoryTimeline";
 import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+// import Footer from "./components/Footer";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
@@ -32,7 +32,7 @@ function App() {
           {/* Redirect any unknown route to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        <Footer />
+        {/* <Footer /> */}
       </Router>
     </AuthProvider>
   );
