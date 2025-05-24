@@ -14,7 +14,13 @@ app.use(cors());
 // app.use(express.static(public));
 app.use(express.json());
 
-mongoose.connect(process.env.MONGODB_URI);
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("✅ MongoDB connected successfully"))
+  .catch((err) => {
+    console.error("❌ MongoDB connection failed:", err);
+    process.exit(1);
+  });
 
 const key = Buffer.from(process.env.KEY, "hex");
 
