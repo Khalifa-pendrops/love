@@ -1,0 +1,26 @@
+.romantic-bg {
+  background: linear-gradient(to right, #ff9a9e, #fad0c4);
+  background-size: cover;
+  font-family: 'Dancing Script', cursive;
+  color: #3c003c;
+}
+
+.card {
+  background-color: #fff0f6;
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.navbar {
+  background-color: #ffe4e1;
+}
+
+.btn-romantic {
+  background-color: #c71585;
+  color: white;
+}
+
+.btn-romantic:hover {
+  background-color: #a0136a;
+}
